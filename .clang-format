@@ -1,0 +1,3 @@
+# BreakBeforeBraces: Allman
+BasedOnStyle: Microsoft
+IndentWidth: 2
