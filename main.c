@@ -21,17 +21,9 @@ bool ScanLine(int i, int j, bool doFlip)
    * colour.
    * Then loop over toFlip[] inverting the tile colour.
    */
-  char *UpLeft = "upleft";
-  char *UpRight = "upright";
-  char *DownLeft = "downleft";
-  char *DownRight = "downright";
-  char *Up = "up";
-  char *Down = "down";
-  char *Left = "left";
-  char *Right = "right";
 
-  char *Directions[] = {UpLeft, UpRight, DownLeft, DownRight,
-                        Up,     Down,    Left,     Right};
+  int Directions[8][2] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1},
+                          {-1, 0},  {1, 0},  {0, -1}, {0, 1}};
 
   int Starti = i;
   int Startj = j;
@@ -43,7 +35,7 @@ bool ScanLine(int i, int j, bool doFlip)
   {
     i = Starti;
     j = Startj;
-    char *Direction = Directions[n];
+    int *Direction = Directions[n];
 
     /* Need to initialise toFlip values to {-1,-1} otherwise grid[0][0] will
      * always be flipped. */
@@ -53,38 +45,13 @@ bool ScanLine(int i, int j, bool doFlip)
       toFlip[i][0] = -1;
       toFlip[i][1] = -1;
     }
+
     int FlipCounter = 0;
     bool validMove = true;
     while (i >= 0 && i < GRID_SIZE && j >= 0 && j < GRID_SIZE)
     {
-      if (Direction == Up)
-        --i;
-      if (Direction == Down)
-        ++i;
-      if (Direction == Left)
-        --j;
-      if (Direction == Right)
-        ++j;
-      if (Direction == UpLeft)
-      {
-        --i;
-        --j;
-      }
-      if (Direction == UpRight)
-      {
-        --i;
-        ++j;
-      }
-      if (Direction == DownLeft)
-      {
-        ++i;
-        --j;
-      }
-      if (Direction == DownRight)
-      {
-        ++i;
-        ++j;
-      }
+      i += Direction[0];
+      j += Direction[1];
 
       /* If we're out of bounds after iterating, move on to the next
        * direction. */
