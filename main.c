@@ -5,7 +5,7 @@
 /* An even number that defines the number of row/columns in the grid. */
 #define GRID_SIZE 8
 
-static int grid[GRID_SIZE][GRID_SIZE] = {0};
+int grid[GRID_SIZE][GRID_SIZE];
 
 bool Player1Turn = true;
 int PlayerColour;
