@@ -201,28 +201,36 @@ int randrange(int lower, int upper)
 
 int main(int argc, char *argv[])
 {
+  /* Initialise all grid tiles to blank. */
+  for (int i = 0; i < GRID_SIZE; ++i)
+    for (int j = 0; j < GRID_SIZE; ++j)
+      grid[i][j] = 0;
   /* Initialise starting grid positions. */
   grid[GRID_SIZE / 2 - 1][GRID_SIZE / 2 - 1] = 1;
   grid[GRID_SIZE / 2][GRID_SIZE / 2] = 1;
   grid[GRID_SIZE / 2 - 1][GRID_SIZE / 2] = -1;
   grid[GRID_SIZE / 2][GRID_SIZE / 2 - 1] = -1;
-  while (true)
-  {
-    PlayerColour = Player1Turn ? -1 : 1;
-    if (!CanPlay())
-    {
-      int Player1Score = GetScore(-1);
-      int Player2Score = GetScore(1);
 
-      if (Player1Score != Player2Score)
-        printf("Player %d wins!\n", Player1Score > Player2Score ? 1 : 2);
-      else
-        printf("Draw!\n");
-      return 0;
-    }
+  int TurnCount = 0;
+  while (CanPlay())
+  {
+    ++TurnCount;
+    printf("Turn %d\n", TurnCount);
+    PlayerColour = Player1Turn ? -1 : 1;
     PrintGrid(grid);
     int *Move = GetPlayerMove();
+    /* int Move[2] = {randrange(0, 7), randrange(0, 7)}; */
+    /* printf("\n"); */
     DoPlayerMove(Move);
   }
+
+  int Player1Score = GetScore(-1);
+  int Player2Score = GetScore(1);
+
+  if (Player1Score != Player2Score)
+    printf("Player %d wins!\n", Player1Score > Player2Score ? 1 : 2);
+  else
+    printf("Draw!\n");
+
   return 0;
 }
