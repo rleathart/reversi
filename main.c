@@ -194,7 +194,7 @@ bool CanPlay(void)
       int Move[] = {i, j};
       if (grid[i][j] != 0)
         continue;
-      FlipInfo = GetFlips(i, j);
+      GridInfo FlipInfo = GetFlips(i, j);
       if (isValidMove(Move, FlipInfo))
         return true;
     }
