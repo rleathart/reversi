@@ -221,7 +221,26 @@ int randrange(int lower, int upper)
   return (rand() % (upper - lower + 1)) + lower;
 }
 
-int main(int argc, char *argv[])
+int GameExit(void)
+{
+  printf("Game finished!\n");
+
+  int Player1Score = GetScore(-1);
+  int Player2Score = GetScore(1);
+
+  PrintGrid(grid);
+
+  printf("Player 1 score: %d\n", Player1Score);
+  printf("Player 2 score: %d\n", Player2Score);
+
+  if (Player1Score != Player2Score)
+    printf("Player %d wins!\n", Player1Score > Player2Score ? 1 : 2);
+  else
+    printf("Draw!\n");
+  return 0;
+}
+
+int main(void)
 {
   /* Set the seed for rand() */
   srand(time(0));
