@@ -242,8 +242,8 @@ int GameExit(void)
 
 int main(void)
 {
-  /* Set the seed for rand() */
-  srand(time(0));
+  /* Set the seed for rand(). Only required for testing purposes. */
+  /* srand(time(0)); */
 
   GridInfo FlipInfo = New_GridInfo();
 
