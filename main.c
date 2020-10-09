@@ -184,7 +184,7 @@ void DoPlayerMove(int Move[], GridInfo FlipInfo)
   Player1Turn = !Player1Turn;
 }
 
-bool CanPlay(GridInfo FlipInfo)
+bool CanPlay(void)
 {
   /* For every tile on the grid, see if putting a piece there results in a
    * valid move. If no tiles result in valid moves, the game is over. */
