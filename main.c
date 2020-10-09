@@ -1,7 +1,12 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+typedef enum
+{
+  false,
+  true
+} bool;
 
 /* An even number that defines the number of row/columns in the grid. */
 #define GRID_SIZE 8
