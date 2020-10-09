@@ -259,39 +259,55 @@ int main(void)
   grid[GRID_SIZE / 2][GRID_SIZE / 2 - 1] = -1;
 
   int TurnCount = 0;
-  bool canPlay = true;
+
+  /* We need a bool to keep track of whether there was a valid move available on
+   * the previous turn. We should stop if nothing could be played on the
+   * previous turn and nothing can be played on the current turn. */
+  bool lastCouldPlay = true;
   while (true)
   {
-    ++TurnCount;
-    printf("Turn %d. %s to play\n", TurnCount, Player1Turn ? "W" : "B");
     PlayerColour = Player1Turn ? -1 : 1;
 
+    if (!CanPlay())
+    {
+      /* If the current player can't play and the previous player also
+       * couldn't play, the game is over. */
+      if (!lastCouldPlay)
+        break;
+
+      /* Otherwise, let the next loop iteration know we couldn't play and go
+       * to the next turn */
+      lastCouldPlay = false;
+      Player1Turn = !Player1Turn;
+      continue;
+    }
+
+    /* The current player can play, so let the next iteration know that. */
+    lastCouldPlay = true;
+
+    ++TurnCount;
+    printf("Turn %d. %s to play\n", TurnCount, Player1Turn ? "W" : "B");
+
     PrintGrid(grid);
+
     int *Move;
     /* int Move[2]; */
+    /* Keep asking the user for a move until it is a valid one. */
     bool validMove = false;
     while (!validMove)
     {
       Move = GetPlayerMove();
-      /* Move[0] = randrange(0, 7); */
-      /* Move[1] = randrange(0, 7); */
+      /* Move[0] = randrange(0, GRID_SIZE - 1); */
+      /* Move[1] = randrange(0, GRID_SIZE - 1); */
       FlipInfo = GetFlips(Move[0], Move[1]);
       validMove = isValidMove(Move, FlipInfo);
 
       if (!validMove)
-      {
-        /* Check if there are any valid moves */
-        canPlay = CanPlay(FlipInfo);
-        /* If not, the game is over */
-        if (!canPlay)
-          return GameExit();
-        /* If we can still play, prompt the user for a different move. */
         printf("Invalid move!\n");
-      }
     }
 
     DoPlayerMove(Move, FlipInfo);
   }
 
-  return 0;
+  return GameExit();
 }
