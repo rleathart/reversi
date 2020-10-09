@@ -260,40 +260,38 @@ int main(void)
 
   int TurnCount = 0;
   bool canPlay = true;
-  do
+  while (true)
   {
     ++TurnCount;
     printf("Turn %d. %s to play\n", TurnCount, Player1Turn ? "W" : "B");
     PlayerColour = Player1Turn ? -1 : 1;
-    canPlay = CanPlay(FlipInfo);
-    if (!canPlay)
-      break;
+
     PrintGrid(grid);
     int *Move;
     /* int Move[2]; */
-    bool validMove = true;
-    do
+    bool validMove = false;
+    while (!validMove)
     {
       Move = GetPlayerMove();
       /* Move[0] = randrange(0, 7); */
       /* Move[1] = randrange(0, 7); */
       FlipInfo = GetFlips(Move[0], Move[1]);
       validMove = isValidMove(Move, FlipInfo);
+
       if (!validMove)
+      {
+        /* Check if there are any valid moves */
+        canPlay = CanPlay(FlipInfo);
+        /* If not, the game is over */
+        if (!canPlay)
+          return GameExit();
+        /* If we can still play, prompt the user for a different move. */
         printf("Invalid move!\n");
-    } while (!validMove);
+      }
+    }
 
     DoPlayerMove(Move, FlipInfo);
-  } while (canPlay);
-
-  PrintGrid(grid);
-  int Player1Score = GetScore(-1);
-  int Player2Score = GetScore(1);
-
-  if (Player1Score != Player2Score)
-    printf("Player %d wins!\n", Player1Score > Player2Score ? 1 : 2);
-  else
-    printf("Draw!\n");
+  }
 
   return 0;
 }
