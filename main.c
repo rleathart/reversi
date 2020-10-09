@@ -24,7 +24,7 @@ void GridInfo_print(GridInfo *self)
   int GridInfoPositionSize = sizeof self->Position / sizeof self->Position[0];
   for (int i = 0; i < GridInfoPositionSize; ++i)
   {
-    printf("{%d, %d},",self->Position[i][0], self->Position[i][1]);
+    printf("{%d, %d},", self->Position[i][0], self->Position[i][1]);
   }
   printf("\n");
 }
