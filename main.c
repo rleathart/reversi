@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 typedef enum
@@ -11,9 +12,6 @@ typedef enum
 /* An even number that defines the number of row/columns in the grid. */
 #define GRID_SIZE 8
 
-int grid[GRID_SIZE][GRID_SIZE];
-
-bool Player1Turn = true;
 int PlayerColour;
 
 typedef struct GridInfo GridInfo;
@@ -23,6 +21,17 @@ struct GridInfo
   int Position[GRID_SIZE * GRID_SIZE][2];
   void (*print)(GridInfo *FlipInfo);
 };
+
+typedef struct GameState_t GameState_t;
+
+struct GameState_t
+{
+  bool Player1Turn;
+  int Grid[GRID_SIZE][GRID_SIZE];
+  int TurnCount;
+};
+
+GameState_t GameState = { .Player1Turn = true };
 
 void GridInfo_print(GridInfo *self)
 {
@@ -55,7 +64,8 @@ GridInfo GetFlips(int i, int j)
   int Starti = i;
   int Startj = j;
 
-  int StartColour = grid[i][j] ? grid[i][j] : PlayerColour;
+  PlayerColour = GameState.Player1Turn ? -1 : 1;
+  int StartColour = GameState.Grid[i][j] ? GameState.Grid[i][j] : PlayerColour;
 
   GridInfo FlipInfo = New_GridInfo();
 
@@ -83,12 +93,12 @@ GridInfo GetFlips(int i, int j)
 
       /* If we encounter a piece that is the same colour as that of the tile
        * we started on, we have checked all we need to for this direction. */
-      if (grid[i][j] == StartColour)
+      if (GameState.Grid[i][j] == StartColour)
         break;
 
       /* If we encounter a blank tile before a tile of the same colour, this
        * cannot be a valid direction so move on to the next one. */
-      if (grid[i][j] == 0)
+      if (GameState.Grid[i][j] == 0)
       {
         validMove = false;
         break;
@@ -127,7 +137,7 @@ void DoFlips(GridInfo FlipInfo)
     int row = FlipInfo.Position[i][0];
     int col = FlipInfo.Position[i][1];
     if (row != -1 && col != -1)
-      grid[row][col] = -grid[row][col];
+      GameState.Grid[row][col] = -GameState.Grid[row][col];
   }
 }
 
@@ -148,7 +158,7 @@ void PrintGrid(int grid[GRID_SIZE][GRID_SIZE])
 bool isValidMove(int Move[], GridInfo FlipInfo)
 {
   /* This tile is occupied already. */
-  if (grid[Move[0]][Move[1]] != 0)
+  if (GameState.Grid[Move[0]][Move[1]] != 0)
     return false;
 
   int FlipInfoPositionSize =
@@ -166,15 +176,56 @@ bool isValidMove(int Move[], GridInfo FlipInfo)
   return false;
 }
 
+void SaveGame()
+{
+  FILE* SaveGame = fopen("save.dat", "wb");
+  fwrite(&GameState, sizeof GameState, 1, SaveGame);
+  fclose(SaveGame);
+}
+
+int LoadGame()
+{
+  FILE* SaveGame = fopen("save.dat", "rb");
+  if (!SaveGame)
+  {
+    fprintf(stderr, "Error: No save file to load!\n");
+    fclose(SaveGame);
+    return 1;
+  }
+  fread(&GameState, sizeof GameState, 1, SaveGame);
+  fclose(SaveGame);
+  return 0;
+}
+
 int *GetPlayerMove(void)
 {
   static int Move[2];
-  printf("[%s] Move vertical 0-%d: ", Player1Turn ? "W" : "B", GRID_SIZE - 1);
-  scanf("%d", &Move[0]);
-  printf("[%s] Move horizontal 0-%d: ", Player1Turn ? "W" : "B", GRID_SIZE - 1);
-  scanf("%d", &Move[1]);
+  char Input[8];
 
-  if (grid[Move[0]][Move[1]])
+  char *Directions[] = {"vertical", "horizontal"};
+  for (int i = 0; i < sizeof Directions / sizeof Directions[0]; ++i)
+  {
+    printf("[%s] Move %s 0-%d: ", GameState.Player1Turn ? "W" : "B",
+           Directions[i], GRID_SIZE - 1);
+    scanf("%s", Input);
+    if (Input[0] == 'l')
+    {
+      if (LoadGame() == 0)
+        printf("Game loaded!\n");
+      PrintGrid(GameState.Grid);
+      return GetPlayerMove();
+    }
+    else if (Input[0] == 's')
+    {
+      SaveGame();
+      printf("Game saved!\n");
+      return GetPlayerMove();
+    }
+    else
+      Move[i] = atoi(Input);
+  }
+
+  if (GameState.Grid[Move[0]][Move[1]])
   {
     printf("Grid location %d,%d is already occupied!\n", Move[0], Move[1]);
     return GetPlayerMove();
@@ -184,9 +235,9 @@ int *GetPlayerMove(void)
 
 void DoPlayerMove(int Move[], GridInfo FlipInfo)
 {
-  grid[Move[0]][Move[1]] = Player1Turn ? -1 : 1;
+  GameState.Grid[Move[0]][Move[1]] = GameState.Player1Turn ? -1 : 1;
   DoFlips(FlipInfo);
-  Player1Turn = !Player1Turn;
+  GameState.Player1Turn = !GameState.Player1Turn;
 }
 
 bool CanPlay(void)
@@ -197,7 +248,7 @@ bool CanPlay(void)
     for (int j = 0; j < GRID_SIZE; ++j)
     {
       int Move[] = {i, j};
-      if (grid[i][j] != 0)
+      if (GameState.Grid[i][j] != 0)
         continue;
       GridInfo FlipInfo = GetFlips(i, j);
       if (isValidMove(Move, FlipInfo))
@@ -214,7 +265,7 @@ int GetScore(int Player)
   int Score = 0;
   for (int i = 0; i < GRID_SIZE; ++i)
     for (int j = 0; j < GRID_SIZE; ++j)
-      if (grid[i][j] == Player)
+      if (GameState.Grid[i][j] == Player)
         ++Score;
 
   return Score;
@@ -233,7 +284,7 @@ int GameExit(void)
   int Player1Score = GetScore(-1);
   int Player2Score = GetScore(1);
 
-  PrintGrid(grid);
+  PrintGrid(GameState.Grid);
 
   printf("Player 1 score: %d\n", Player1Score);
   printf("Player 2 score: %d\n", Player2Score);
@@ -245,25 +296,34 @@ int GameExit(void)
   return 0;
 }
 
+void PrintWelcome()
+{
+  printf(
+      "------- Welcome to Reversi! -------\n\n"
+      "Enter 's' or 'l' at any time to save/load your game.\n\n");
+}
+
 int main(void)
 {
   /* Set the seed for rand(). Only required for testing purposes. */
   /* srand(time(0)); */
+
+  PrintWelcome();
 
   GridInfo FlipInfo = New_GridInfo();
 
   /* Initialise all grid tiles to blank. */
   for (int i = 0; i < GRID_SIZE; ++i)
     for (int j = 0; j < GRID_SIZE; ++j)
-      grid[i][j] = 0;
+      GameState.Grid[i][j] = 0;
 
   /* Initialise starting grid positions. */
-  grid[GRID_SIZE / 2 - 1][GRID_SIZE / 2 - 1] = 1;
-  grid[GRID_SIZE / 2][GRID_SIZE / 2] = 1;
-  grid[GRID_SIZE / 2 - 1][GRID_SIZE / 2] = -1;
-  grid[GRID_SIZE / 2][GRID_SIZE / 2 - 1] = -1;
+  GameState.Grid[GRID_SIZE / 2 - 1][GRID_SIZE / 2 - 1] = 1;
+  GameState.Grid[GRID_SIZE / 2][GRID_SIZE / 2] = 1;
+  GameState.Grid[GRID_SIZE / 2 - 1][GRID_SIZE / 2] = -1;
+  GameState.Grid[GRID_SIZE / 2][GRID_SIZE / 2 - 1] = -1;
 
-  int TurnCount = 0;
+  GameState.TurnCount = 0;
 
   /* We need a bool to keep track of whether there was a valid move available on
    * the previous turn. We should stop if nothing could be played on the
@@ -271,7 +331,7 @@ int main(void)
   bool lastCouldPlay = true;
   while (true)
   {
-    PlayerColour = Player1Turn ? -1 : 1;
+    PlayerColour = GameState.Player1Turn ? -1 : 1;
 
     if (!CanPlay())
     {
@@ -283,17 +343,18 @@ int main(void)
       /* Otherwise, let the next loop iteration know we couldn't play and go
        * to the next turn */
       lastCouldPlay = false;
-      Player1Turn = !Player1Turn;
+      GameState.Player1Turn = !GameState.Player1Turn;
       continue;
     }
 
     /* The current player can play, so let the next iteration know that. */
     lastCouldPlay = true;
 
-    ++TurnCount;
-    printf("Turn %d. %s to play\n", TurnCount, Player1Turn ? "W" : "B");
+    ++GameState.TurnCount;
+    printf("Turn %d. %s to play\n", GameState.TurnCount,
+           GameState.Player1Turn ? "W" : "B");
 
-    PrintGrid(grid);
+    PrintGrid(GameState.Grid);
 
     int *Move;
     /* int Move[2]; */
