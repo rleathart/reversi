@@ -8,7 +8,7 @@ $(PROGNAME): main.o
 clean:
 	rm -f *.o
 Clean: clean
-	rm -f $(PROGNAME)
+	rm -f $(PROGNAME) save.dat
 
 run: $(PROGNAME)
 	./$(PROGNAME)
