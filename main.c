@@ -209,31 +209,28 @@ void FlushInputStream()
     ;
 }
 
-int GetUserInput(char* Prompt, int BytesToRead, char** OutString)
+int GetUserInput(char* Prompt, int BytesToRead, char* OutString)
 {
   printf("%s", Prompt);
+  fgets(OutString, BytesToRead, stdin);
 
-  char* Buffer = malloc(BytesToRead);
-  fgets(Buffer, BytesToRead, stdin);
+  int StringLength = strlen(OutString);
 
-  int StringLength = strlen(Buffer);
-
-  if (Buffer[StringLength - 1] == '\n')
-    Buffer[StringLength - 1] = '\0';
+  if (OutString[StringLength - 1] == '\n')
+    OutString[StringLength - 1] = '\0';
   else
     FlushInputStream();
 
-  *OutString = Buffer;
-
-  free(Buffer);
   return 0;
 }
+
+#define INPUT_BUFFER_SIZE 16
 
 int* GetPlayerMove(void)
 {
   static int Move[2];
 
-  char* Input;
+  char Input[INPUT_BUFFER_SIZE] = {0};
 
   char* Directions[] = {"vertical", "horizontal"};
   for (int i = 0; i < sizeof Directions / sizeof Directions[0]; ++i)
@@ -241,7 +238,7 @@ int* GetPlayerMove(void)
     printf("[%s] Move %s 0-%d: ", GameState.Player1Turn ? "W" : "B",
            Directions[i], GRID_SIZE - 1);
 
-    GetUserInput("", 16, &Input);
+    GetUserInput("", INPUT_BUFFER_SIZE, Input);
 
     if (strlen(Input) == 1)
       switch (Input[0])
