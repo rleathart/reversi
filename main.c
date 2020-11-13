@@ -9,6 +9,11 @@ typedef enum
   true
 } bool;
 
+enum
+{
+  ExitSuccess
+};
+
 /* An even number that defines the number of row/columns in the grid. */
 #define GRID_SIZE 8
 
@@ -19,7 +24,7 @@ typedef struct GridInfo GridInfo;
 struct GridInfo
 {
   int Position[GRID_SIZE * GRID_SIZE][2];
-  void (*print)(GridInfo *FlipInfo);
+  void (*print)(GridInfo* FlipInfo);
 };
 
 typedef struct GameState_t GameState_t;
@@ -31,9 +36,9 @@ struct GameState_t
   int TurnCount;
 };
 
-GameState_t GameState = { .Player1Turn = true };
+GameState_t GameState = {.Player1Turn = true};
 
-void GridInfo_print(GridInfo *self)
+void GridInfo_print(GridInfo* self)
 {
   int GridInfoPositionSize = sizeof self->Position / sizeof self->Position[0];
   for (int i = 0; i < GridInfoPositionSize; ++i)
@@ -74,7 +79,7 @@ GridInfo GetFlips(int i, int j)
   {
     i = Starti;
     j = Startj;
-    int *Direction = Directions[n];
+    int* Direction = Directions[n];
 
     int ProgressCheck[GRID_SIZE * GRID_SIZE] = {0};
     bool validMove = true;
@@ -197,32 +202,63 @@ int LoadGame()
   return 0;
 }
 
-int *GetPlayerMove(void)
+void FlushInputStream()
+{
+  int c;
+  while ((c = getchar()) != '\n' && c != EOF)
+    ;
+}
+
+int GetUserInput(char* Prompt, int BytesToRead, char** OutString)
+{
+  printf("%s", Prompt);
+
+  char* Buffer = malloc(BytesToRead);
+  fgets(Buffer, BytesToRead, stdin);
+
+  int StringLength = strlen(Buffer);
+
+  if (Buffer[StringLength - 1] == '\n')
+    Buffer[StringLength - 1] = '\0';
+  else
+    FlushInputStream();
+
+  *OutString = Buffer;
+
+  free(Buffer);
+  return 0;
+}
+
+int* GetPlayerMove(void)
 {
   static int Move[2];
-  char Input[8];
 
-  char *Directions[] = {"vertical", "horizontal"};
+  char* Input;
+
+  char* Directions[] = {"vertical", "horizontal"};
   for (int i = 0; i < sizeof Directions / sizeof Directions[0]; ++i)
   {
     printf("[%s] Move %s 0-%d: ", GameState.Player1Turn ? "W" : "B",
            Directions[i], GRID_SIZE - 1);
-    scanf("%s", Input);
-    if (Input[0] == 'l')
-    {
-      if (LoadGame() == 0)
-        printf("Game loaded!\n");
-      PrintGrid(GameState.Grid);
-      return GetPlayerMove();
-    }
-    else if (Input[0] == 's')
-    {
-      SaveGame();
-      printf("Game saved!\n");
-      return GetPlayerMove();
-    }
-    else
-      Move[i] = atoi(Input);
+
+    GetUserInput("", 16, &Input);
+
+    if (strlen(Input) == 1)
+      switch (Input[0])
+      {
+      case 'l':
+        if (LoadGame() == 0)
+          printf("Game loaded!\n");
+        PrintGrid(GameState.Grid);
+        return GetPlayerMove();
+      case 's':
+        SaveGame();
+        printf("Game saved!\n");
+        return GetPlayerMove();
+      case 'x':
+        exit(ExitSuccess);
+      }
+    Move[i] = atoi(Input);
   }
 
   if (GameState.Grid[Move[0]][Move[1]])
@@ -298,9 +334,8 @@ int GameExit(void)
 
 void PrintWelcome()
 {
-  printf(
-      "------- Welcome to Reversi! -------\n\n"
-      "Enter 's' or 'l' at any time to save/load your game.\n\n");
+  printf("------- Welcome to Reversi! -------\n\n"
+         "Enter 's' or 'l' at any time to save/load your game.\n\n");
 }
 
 int main(void)
@@ -356,7 +391,7 @@ int main(void)
 
     PrintGrid(GameState.Grid);
 
-    int *Move;
+    int* Move;
     /* int Move[2]; */
     /* Keep asking the user for a move until it is a valid one. */
     bool validMove = false;
